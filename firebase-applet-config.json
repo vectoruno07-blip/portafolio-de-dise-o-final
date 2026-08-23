@@ -1,12 +1,12 @@
 {
-  "projectId": "upbeat-acrobat-w2l12",
-  "appId": "1:49719372733:web:fa8f9f37a7b0bb85fe00d4",
-  "apiKey": "AIzaSyAf0EgYWZGxQ1heOdrof1-C_SMeiHCBt6Q",
-  "authDomain": "upbeat-acrobat-w2l12.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-protafoliodigita-f39c892c-fee2-47bd-aae4-e49902701d3c",
-  "storageBucket": "upbeat-acrobat-w2l12.firebasestorage.app",
-  "messagingSenderId": "49719372733",
-  "measurementId": "",
-  "oAuthClientId": "49719372733-vpc0kqbj1kvj88qp4nmt2ejmp2at361i.apps.googleusercontent.com",
+  "projectId": "portafolio-dg-final",
+  "appId": "1:983845628582:web:2425c0b314e81284a26267",
+  "apiKey": "AIzaSyBvRB62KEtgrrtZ39i4XTOMBn46BmBNGxY",
+  "authDomain": "portafolio-dg-final.firebaseapp.com",
+  "firestoreDatabaseId": "(default)",
+  "storageBucket": "portafolio-dg-final.firebasestorage.app",
+  "messagingSenderId": "983845628582",
+  "measurementId": "G-RZZQJ7WFTN",
+  "oAuthClientId": "",
   "recaptchaSiteKey": ""
 }
