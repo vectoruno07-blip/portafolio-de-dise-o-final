@@ -1,0 +1,70 @@
+{
+  "name": "Víctor Hugo González Pérez | Portafolio de Diseño",
+  "short_name": "Víctor Hugo",
+  "description": "Portafolio profesional interactivo de diseño gráfico, identidad corporativa, editorial, cartelería e infografía.",
+  "start_url": "/",
+  "id": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#07080c",
+  "theme_color": "#ec4899",
+  "lang": "es",
+  "dir": "ltr",
+  "categories": [
+    "design",
+    "portfolio",
+    "business",
+    "productivity"
+  ],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Ver Portafolio",
+      "short_name": "Portafolio",
+      "description": "Explora todos los proyectos de diseño gráfico y editorial",
+      "url": "/#gallery",
+      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Cotizador Interactivo",
+      "short_name": "Cotizador",
+      "description": "Calcula presupuestos de proyectos de diseño en tiempo real",
+      "url": "/#quote",
+      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Gráficos de Habilidades",
+      "short_name": "Habilidades",
+      "description": "Visualiza el radar de competencias y dominio técnico",
+      "url": "/#skills",
+      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
+    }
+  ],
+  "prefer_related_applications": false
+}

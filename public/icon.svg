@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#0f111a" />
+      <stop offset="100%" stopColor="#07080c" />
+    </linearGradient>
+    <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#ec4899" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- Background container with rounded corners -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+
+  <!-- Outer pink circle with shadow -->
+  <g filter="url(#dropShadow)" transform="translate(256, 256)">
+    <circle cx="0" cy="0" r="184" fill="#E6257E" />
+    
+    <!-- Inverted central triangle (White) -->
+    <polygon points="-136,-88 136,-88 0,144" fill="#FFFFFF" />
+    
+    <!-- Central solid blue square -->
+    <rect x="-52" y="-88" width="104" height="104" fill="#0266B3" />
+
+    <!-- Precise geometric outline for contrast -->
+    <circle cx="0" cy="0" r="184" fill="none" stroke="#FFFFFF" stroke-width="4" opacity="0.25" />
+    <polygon points="-136,-88 136,-88 0,144" fill="none" stroke="#0F172A" stroke-width="3" opacity="0.35" />
+    <rect x="-52" y="-88" width="104" height="104" fill="none" stroke="#0F172A" stroke-width="3" opacity="0.35" />
+  </g>
+</svg>

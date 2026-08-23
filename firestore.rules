@@ -1,0 +1,32 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Portfolio data - public read, allow write for portfolio management
+    match /portfolio_data/{docId} {
+      allow read: if true;
+      allow write: if isValidId(docId);
+    }
+
+    // Quote requests - clients submit quotes, admin manages quotes
+    match /quote_requests/{quoteId} {
+      allow read: if true;
+      allow create: if isValidId(quoteId);
+      allow update, delete: if isValidId(quoteId);
+    }
+
+    // Test connection endpoint
+    match /test/{docId} {
+      allow read, write: if true;
+    }
+
+    // Fallback default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

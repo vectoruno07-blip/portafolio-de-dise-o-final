@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="maskableBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#1e1022" />
+      <stop offset="100%" stopColor="#07080c" />
+    </linearGradient>
+  </defs>
+
+  <!-- Full bleed background for maskable purpose -->
+  <rect width="512" height="512" fill="url(#maskableBg)" />
+
+  <!-- Safe area centered logo (60-80% safe zone for Android icon masks) -->
+  <g transform="translate(256, 256) scale(0.85)">
+    <circle cx="0" cy="0" r="160" fill="#E6257E" />
+    <polygon points="-118,-76 118,-76 0,126" fill="#FFFFFF" />
+    <rect x="-45" y="-76" width="90" height="90" fill="#0266B3" />
+    <circle cx="0" cy="0" r="160" fill="none" stroke="#FFFFFF" stroke-width="4" opacity="0.3" />
+  </g>
+</svg>

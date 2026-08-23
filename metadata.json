@@ -1,0 +1,6 @@
+{
+  "name": "Portafolio Víctor Hugo González",
+  "description": "Portafolio digital 100% editable e interactivo de diseño gráfico, identidad visual, cartelería, editorial, multimedia e ilustración con generador de cotizaciones.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

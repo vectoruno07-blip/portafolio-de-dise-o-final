@@ -1,0 +1,120 @@
+{
+  "entities": {
+    "PortfolioData": {
+      "title": "PortfolioData",
+      "description": "Main portfolio information including profile, projects, categories, and theme settings",
+      "type": "object",
+      "properties": {
+        "profile": {
+          "type": "object",
+          "description": "Designer profile data"
+        },
+        "projects": {
+          "type": "array",
+          "description": "List of portfolio projects"
+        },
+        "categories": {
+          "type": "array",
+          "description": "List of project categories"
+        },
+        "themeColor": {
+          "type": "string",
+          "description": "Color theme accent"
+        },
+        "buttonColor": {
+          "type": "string",
+          "description": "Button color style"
+        },
+        "themeMode": {
+          "type": "string",
+          "description": "Light or dark mode"
+        },
+        "language": {
+          "type": "string",
+          "description": "Selected language (es/en)"
+        }
+      }
+    },
+    "QuoteRequest": {
+      "title": "QuoteRequest",
+      "description": "Client quote submission request and its lifecycle status",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier of the quote request"
+        },
+        "quoteNumber": {
+          "type": "string",
+          "description": "Official human-readable quote code"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Formatted date of creation"
+        },
+        "timestamp": {
+          "type": "number",
+          "description": "Epoch timestamp"
+        },
+        "status": {
+          "type": "string",
+          "description": "Current status (pending, responded, approved, archived)"
+        },
+        "clientName": {
+          "type": "string",
+          "description": "Client full name"
+        },
+        "clientCompany": {
+          "type": "string",
+          "description": "Client company name"
+        },
+        "clientContact": {
+          "type": "string",
+          "description": "Client contact information"
+        },
+        "projectType": {
+          "type": "string",
+          "description": "Type of project requested"
+        },
+        "selectedProjects": {
+          "type": "array",
+          "description": "Array of referenced project IDs"
+        },
+        "selectedServices": {
+          "type": "array",
+          "description": "Array of requested services"
+        },
+        "budgetRange": {
+          "type": "string",
+          "description": "Selected budget range"
+        },
+        "estimatedTimeline": {
+          "type": "string",
+          "description": "Desired completion timeline"
+        },
+        "additionalNotes": {
+          "type": "string",
+          "description": "Client additional specifications"
+        },
+        "autoResponseSummary": {
+          "type": "string",
+          "description": "Generated auto response summary text"
+        },
+        "designerNotified": {
+          "type": "boolean",
+          "description": "Whether the designer has been notified"
+        }
+      }
+    }
+  },
+  "firestore": {
+    "/portfolio_data/{docId}": {
+      "schema": "PortfolioData",
+      "description": "Collection storing the single global editable portfolio document"
+    },
+    "/quote_requests/{quoteId}": {
+      "schema": "QuoteRequest",
+      "description": "Collection storing submitted client project quotes"
+    }
+  }
+}
