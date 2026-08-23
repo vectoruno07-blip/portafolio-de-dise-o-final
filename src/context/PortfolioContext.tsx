@@ -202,13 +202,8 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const [hasAdminAccess, setHasAdminAccess] = useState<boolean>(() => {
     try {
-      const params = new URLSearchParams(window.location.search);
-      const isParam = params.get('edit') === 'true' || params.get('admin') === 'true';
-      const isSaved = localStorage.getItem('admin_mode') === 'true' || sessionStorage.getItem('admin_mode') === 'true';
-      if (isParam) {
-        localStorage.setItem('admin_mode', 'true');
-        return true;
-      }
+      // Check if admin session was verified with password
+      const isSaved = sessionStorage.getItem('admin_authenticated') === 'true' || localStorage.getItem('admin_authenticated') === 'true';
       return isSaved;
     } catch (e) {
       return false;
@@ -688,9 +683,9 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const isValid = (trimmed === currentPassword) || (trimmed.toLowerCase() === currentPassword.toLowerCase()) || (trimmed.toLowerCase() === 'vikinga06');
     if (isValid) {
       if (remember) {
-        localStorage.setItem('admin_mode', 'true');
+        localStorage.setItem('admin_authenticated', 'true');
       } else {
-        sessionStorage.setItem('admin_mode', 'true');
+        sessionStorage.setItem('admin_authenticated', 'true');
       }
       setHasAdminAccess(true);
       setIsEditMode(true);
@@ -701,6 +696,8 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, [data.profile?.adminPassword]);
 
   const logoutAdmin = useCallback(() => {
+    localStorage.removeItem('admin_authenticated');
+    sessionStorage.removeItem('admin_authenticated');
     localStorage.removeItem('admin_mode');
     sessionStorage.removeItem('admin_mode');
     setHasAdminAccess(false);
@@ -723,10 +720,12 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     if (logoClicksRef.current >= 5) {
       logoClicksRef.current = 0;
-      if (!hasAdminAccess) {
+      // Always open the authentication modal if not yet authenticated
+      const isAuth = sessionStorage.getItem('admin_authenticated') === 'true' || localStorage.getItem('admin_authenticated') === 'true';
+      if (!isAuth) {
         setIsAdminAuthModalOpen(true);
       } else {
-        // Toggle edit mode if already admin
+        // If already authenticated with password, toggle edit mode
         setIsEditMode(prev => !prev);
       }
     } else {
@@ -734,7 +733,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         logoClicksRef.current = 0;
       }, 2500);
     }
-  }, [hasAdminAccess]);
+  }, []);
 
   const resetAdminPassword = useCallback((newPassword: string) => {
     updatePortfolioState(prev => ({
