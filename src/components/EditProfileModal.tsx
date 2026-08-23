@@ -262,11 +262,7 @@ export const EditProfileModal: React.FC = () => {
       githubUrl: socialLinks.find(s => s.icon === 'github' || s.name.toLowerCase().includes('github'))?.url || '',
       skills: processedSkills,
       tools: processedTools
-    });
-
-    if (buttonColorSelection) {
-      setButtonColor(buttonColorSelection);
-    }
+    }, buttonColorSelection);
 
     setIsProfileModalOpen(false);
   };

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { PortfolioData, ProjectItem, CategoryInfo, ProfileInfo, ClientSelection, Language, QuoteRequest } from '../types';
 import { INITIAL_PORTFOLIO_DATA } from '../data/initialPortfolioData';
 import { translations } from '../translations';
@@ -66,7 +66,7 @@ interface PortfolioContextType {
   setIsAutoResponseModalOpen: (open: boolean) => void;
   
   // Data management
-  updateProfile: (profile: ProfileInfo) => void;
+  updateProfile: (profile: ProfileInfo, buttonColor?: string) => void;
   addProject: (project: Omit<ProjectItem, 'id'>) => void;
   updateProject: (project: ProjectItem) => void;
   deleteProject: (id: string) => void;
@@ -163,8 +163,22 @@ const INITIAL_QUOTE_REQUESTS: QuoteRequest[] = [
 const PortfolioContext = createContext<PortfolioContextType | undefined>(undefined);
 
 export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [data, setData] = useState<PortfolioData>(INITIAL_PORTFOLIO_DATA);
+  const [data, setData] = useState<PortfolioData>(() => {
+    try {
+      const cached = localStorage.getItem('vhg_portfolio_cached_data');
+      if (cached) {
+        return JSON.parse(cached);
+      }
+    } catch (e) {
+      console.warn('Error loading cached portfolio data', e);
+    }
+    return INITIAL_PORTFOLIO_DATA;
+  });
   const [isFirestoreConnected, setIsFirestoreConnected] = useState<boolean>(false);
+  const dataRef = useRef<PortfolioData>(data);
+  useEffect(() => {
+    dataRef.current = data;
+  }, [data]);
 
   const [clientSelection, setClientSelection] = useState<ClientSelection>(() => {
     try {
@@ -229,6 +243,9 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (docSnap.exists()) {
         const remoteData = docSnap.data() as PortfolioData;
         setData(remoteData);
+        try {
+          localStorage.setItem('vhg_portfolio_cached_data', JSON.stringify(remoteData));
+        } catch (e) {}
         setIsFirestoreConnected(true);
       } else {
         // Bootstrap initial portfolio data document in Firestore
@@ -273,13 +290,27 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     };
   }, []);
 
-  // Helper to persist data updates to Firestore
+  // Helper to persist data updates to Firestore and local storage
   const persistPortfolioData = useCallback((newData: PortfolioData) => {
+    try {
+      localStorage.setItem('vhg_portfolio_cached_data', JSON.stringify(newData));
+    } catch (e) {
+      console.warn('Error persisting portfolio cache:', e);
+    }
     const portfolioDocRef = doc(db, 'portfolio_data', 'main');
     setDoc(portfolioDocRef, newData, { merge: true }).catch((err) => {
       handleFirestoreError(err, OperationType.UPDATE, 'portfolio_data/main');
     });
   }, []);
+
+  // Atomic state updater that protects against race conditions and stale closures
+  const updatePortfolioState = useCallback((updater: (current: PortfolioData) => PortfolioData) => {
+    const current = dataRef.current;
+    const next = updater(current);
+    dataRef.current = next;
+    setData(next);
+    persistPortfolioData(next);
+  }, [persistPortfolioData]);
 
   const submitQuoteRequest = (customSelection?: ClientSelection): QuoteRequest => {
     const selection = customSelection || clientSelection;
@@ -467,11 +498,13 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     });
   };
 
-  // Data Modification Handlers - Direct Firestore Persistence
-  const updateProfile = (profile: ProfileInfo) => {
-    const updated = { ...data, profile };
-    setData(updated);
-    persistPortfolioData(updated);
+  // Data Modification Handlers - Direct Firestore Persistence with Atomic Updates
+  const updateProfile = (profile: ProfileInfo, buttonColor?: string) => {
+    updatePortfolioState(prev => ({
+      ...prev,
+      profile,
+      ...(buttonColor ? { buttonColor } : {})
+    }));
   };
 
   const addProject = (projectData: Omit<ProjectItem, 'id'>) => {
@@ -480,30 +513,24 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       ...projectData,
       id: newId
     };
-    const updated = {
-      ...data,
-      projects: [newProject, ...data.projects]
-    };
-    setData(updated);
-    persistPortfolioData(updated);
+    updatePortfolioState(prev => ({
+      ...prev,
+      projects: [newProject, ...prev.projects]
+    }));
   };
 
   const updateProject = (project: ProjectItem) => {
-    const updated = {
-      ...data,
-      projects: data.projects.map(p => (p.id === project.id ? project : p))
-    };
-    setData(updated);
-    persistPortfolioData(updated);
+    updatePortfolioState(prev => ({
+      ...prev,
+      projects: prev.projects.map(p => (p.id === project.id ? project : p))
+    }));
   };
 
   const deleteProject = (id: string) => {
-    const updated = {
-      ...data,
-      projects: data.projects.filter(p => p.id !== id)
-    };
-    setData(updated);
-    persistPortfolioData(updated);
+    updatePortfolioState(prev => ({
+      ...prev,
+      projects: prev.projects.filter(p => p.id !== id)
+    }));
     setClientSelection(prev => ({
       ...prev,
       selectedProjects: prev.selectedProjects.filter(pId => pId !== id)
@@ -511,6 +538,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const addCategory = (categoryData: Omit<CategoryInfo, 'id'> & { id?: string }): CategoryInfo => {
+    const currentData = dataRef.current;
     const rawId = categoryData.id?.trim() 
       ? categoryData.id.trim()
       : categoryData.name.trim().toLowerCase();
@@ -528,14 +556,14 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     // Check for collision
     let uniqueId = slug;
     let counter = 1;
-    while (data.categories.some(c => c.id === uniqueId)) {
+    while (currentData.categories.some(c => c.id === uniqueId)) {
       uniqueId = `${slug}-${counter}`;
       counter++;
     }
 
     const calculatedNumber = categoryData.number?.trim() 
       ? categoryData.number.trim() 
-      : String(data.categories.length + 1).padStart(2, '0');
+      : String(currentData.categories.length + 1).padStart(2, '0');
 
     const newCategory: CategoryInfo = {
       id: uniqueId,
@@ -546,43 +574,39 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       iconName: categoryData.iconName || 'Shapes'
     };
 
-    const updated = {
-      ...data,
-      categories: [...data.categories, newCategory]
-    };
-    setData(updated);
-    persistPortfolioData(updated);
+    updatePortfolioState(prev => ({
+      ...prev,
+      categories: [...prev.categories, newCategory]
+    }));
 
     return newCategory;
   };
 
   const updateCategory = (updatedCategory: CategoryInfo) => {
-    const updated = {
-      ...data,
-      categories: data.categories.map(cat => cat.id === updatedCategory.id ? updatedCategory : cat)
-    };
-    setData(updated);
-    persistPortfolioData(updated);
+    updatePortfolioState(prev => ({
+      ...prev,
+      categories: prev.categories.map(cat => cat.id === updatedCategory.id ? updatedCategory : cat)
+    }));
   };
 
   const deleteCategory = (categoryId: string, reassignToCategoryId?: string) => {
-    const remainingCategories = data.categories.filter(c => c.id !== categoryId);
-    const fallbackTarget = reassignToCategoryId || (remainingCategories.length > 0 ? remainingCategories[0].id : 'logos');
-    
-    const updatedProjects = data.projects.map(proj => {
-      if (proj.category === categoryId) {
-        return { ...proj, category: fallbackTarget };
-      }
-      return proj;
-    });
+    updatePortfolioState(prev => {
+      const remainingCategories = prev.categories.filter(c => c.id !== categoryId);
+      const fallbackTarget = reassignToCategoryId || (remainingCategories.length > 0 ? remainingCategories[0].id : 'logos');
+      
+      const updatedProjects = prev.projects.map(proj => {
+        if (proj.category === categoryId) {
+          return { ...proj, category: fallbackTarget };
+        }
+        return proj;
+      });
 
-    const updated = {
-      ...data,
-      categories: remainingCategories,
-      projects: updatedProjects
-    };
-    setData(updated);
-    persistPortfolioData(updated);
+      return {
+        ...prev,
+        categories: remainingCategories,
+        projects: updatedProjects
+      };
+    });
 
     if (selectedCategory === categoryId) {
       setSelectedCategory('todos');
@@ -591,22 +615,17 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const resetToDefaults = () => {
     if (window.confirm('¿Deseas restablecer todos los proyectos y datos al estado inicial del portafolio de Víctor Hugo González?')) {
-      setData(INITIAL_PORTFOLIO_DATA);
+      updatePortfolioState(() => INITIAL_PORTFOLIO_DATA);
       setClientSelection(DEFAULT_CLIENT_SELECTION);
-      persistPortfolioData(INITIAL_PORTFOLIO_DATA);
     }
   };
 
   const setThemeColor = (themeColor: PortfolioData['themeColor']) => {
-    const updated = { ...data, themeColor };
-    setData(updated);
-    persistPortfolioData(updated);
+    updatePortfolioState(prev => ({ ...prev, themeColor }));
   };
 
   const setButtonColor = (buttonColor: string) => {
-    const updated = { ...data, buttonColor };
-    setData(updated);
-    persistPortfolioData(updated);
+    updatePortfolioState(prev => ({ ...prev, buttonColor }));
   };
 
   const getButtonStyle = (): React.CSSProperties | undefined => {
