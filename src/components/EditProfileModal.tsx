@@ -31,7 +31,10 @@ import {
   Check,
   Link2,
   ExternalLink,
-  Globe
+  Globe,
+  KeyRound,
+  ShieldCheck,
+  Lock
 } from 'lucide-react';
 
 export const EditProfileModal: React.FC = () => {
@@ -90,7 +93,9 @@ export const EditProfileModal: React.FC = () => {
         linkedinUrl: data.profile.linkedinUrl || '',
         behanceUrl: data.profile.behanceUrl || '',
         dribbbleUrl: data.profile.dribbbleUrl || '',
-        githubUrl: data.profile.githubUrl || ''
+        githubUrl: data.profile.githubUrl || '',
+        adminPassword: data.profile.adminPassword || 'vikinga06',
+        adminSecurityEmail: data.profile.adminSecurityEmail || 'vectoruno07@gmail.com'
       });
 
       // Populate initial socialLinks
@@ -1383,6 +1388,50 @@ export const EditProfileModal: React.FC = () => {
                 isDark ? 'bg-[#090a0f] border-white/10 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
               }`}
             />
+          </div>
+
+          {/* Section 6: Seguridad & Clave Administrador */}
+          <div className={`p-4 rounded-2xl border ${isDark ? 'bg-white/5 border-white/10' : 'bg-slate-50 border-slate-200'}`}>
+            <h3 className={`text-xs font-bold uppercase tracking-wider mb-3 flex items-center gap-2 ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
+              <ShieldCheck className="w-4 h-4" />
+              <span>Seguridad & Acceso Administrador</span>
+            </h3>
+            <p className={`text-[11px] mb-3 ${isDark ? 'text-neutral-400' : 'text-slate-600'}`}>
+              Configura la contraseña requerida al dar 5 clics al logotipo y el correo para recuperación en caso de olvido.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className={`block text-[11px] font-semibold mb-1 flex items-center gap-1.5 ${isDark ? 'text-neutral-300' : 'text-slate-700'}`}>
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>Contraseña de Acceso</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.adminPassword || 'vikinga06'}
+                  onChange={(e) => setFormData({ ...formData, adminPassword: e.target.value })}
+                  placeholder="vikinga06"
+                  className={`w-full px-3 py-2 text-xs font-mono border rounded-xl focus:ring-2 focus:ring-amber-400 focus:outline-none ${
+                    isDark ? 'bg-[#090a0f] border-white/10 text-white' : 'bg-white border-slate-300 text-slate-900'
+                  }`}
+                />
+              </div>
+
+              <div>
+                <label className={`block text-[11px] font-semibold mb-1 flex items-center gap-1.5 ${isDark ? 'text-neutral-300' : 'text-slate-700'}`}>
+                  <Mail className="w-3.5 h-3.5" />
+                  <span>Correo de Recuperación</span>
+                </label>
+                <input
+                  type="email"
+                  value={formData.adminSecurityEmail || 'vectoruno07@gmail.com'}
+                  onChange={(e) => setFormData({ ...formData, adminSecurityEmail: e.target.value })}
+                  placeholder="vectoruno07@gmail.com"
+                  className={`w-full px-3 py-2 text-xs border rounded-xl focus:ring-2 focus:ring-amber-400 focus:outline-none ${
+                    isDark ? 'bg-[#090a0f] border-white/10 text-white' : 'bg-white border-slate-300 text-slate-900'
+                  }`}
+                />
+              </div>
+            </div>
           </div>
 
           {/* Backup, Restore & Reset Section */}

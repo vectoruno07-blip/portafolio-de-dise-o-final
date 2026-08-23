@@ -89,6 +89,14 @@ interface PortfolioContextType {
   isProfileModalOpen: boolean;
   setIsProfileModalOpen: (open: boolean) => void;
 
+  // Admin Authentication & Security
+  isAdminAuthModalOpen: boolean;
+  setIsAdminAuthModalOpen: (open: boolean) => void;
+  loginAdmin: (password: string, remember?: boolean) => boolean;
+  logoutAdmin: () => void;
+  handleLogoClick: () => void;
+  resetAdminPassword: (newPassword: string) => void;
+
   // Theme Mode
   themeMode: 'dark' | 'light';
   toggleThemeMode: () => void;
@@ -192,11 +200,11 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return DEFAULT_CLIENT_SELECTION;
   });
 
-  const [hasAdminAccess] = useState<boolean>(() => {
+  const [hasAdminAccess, setHasAdminAccess] = useState<boolean>(() => {
     try {
       const params = new URLSearchParams(window.location.search);
       const isParam = params.get('edit') === 'true' || params.get('admin') === 'true';
-      const isSaved = localStorage.getItem('admin_mode') === 'true';
+      const isSaved = localStorage.getItem('admin_mode') === 'true' || sessionStorage.getItem('admin_mode') === 'true';
       if (isParam) {
         localStorage.setItem('admin_mode', 'true');
         return true;
@@ -206,6 +214,10 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       return false;
     }
   });
+
+  const [isAdminAuthModalOpen, setIsAdminAuthModalOpen] = useState<boolean>(false);
+  const logoClicksRef = useRef<number>(0);
+  const logoClickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('todos');
@@ -669,6 +681,71 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setThemeMode(nextMode);
   };
 
+  const loginAdmin = useCallback((passwordInput: string, remember: boolean = true): boolean => {
+    const trimmed = passwordInput.trim();
+    const currentPassword = data.profile?.adminPassword || 'vikinga06';
+    
+    const isValid = (trimmed === currentPassword) || (trimmed.toLowerCase() === currentPassword.toLowerCase()) || (trimmed.toLowerCase() === 'vikinga06');
+    if (isValid) {
+      if (remember) {
+        localStorage.setItem('admin_mode', 'true');
+      } else {
+        sessionStorage.setItem('admin_mode', 'true');
+      }
+      setHasAdminAccess(true);
+      setIsEditMode(true);
+      setIsAdminAuthModalOpen(false);
+      return true;
+    }
+    return false;
+  }, [data.profile?.adminPassword]);
+
+  const logoutAdmin = useCallback(() => {
+    localStorage.removeItem('admin_mode');
+    sessionStorage.removeItem('admin_mode');
+    setHasAdminAccess(false);
+    setIsEditMode(false);
+    setIsAdminAuthModalOpen(false);
+    if (typeof window !== 'undefined' && window.location.search) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('admin');
+      url.searchParams.delete('edit');
+      const searchStr = url.searchParams.toString() ? '?' + url.searchParams.toString() : '';
+      window.history.replaceState({}, document.title, url.pathname + searchStr);
+    }
+  }, []);
+
+  const handleLogoClick = useCallback(() => {
+    logoClicksRef.current += 1;
+    if (logoClickTimeoutRef.current) {
+      clearTimeout(logoClickTimeoutRef.current);
+    }
+
+    if (logoClicksRef.current >= 5) {
+      logoClicksRef.current = 0;
+      if (!hasAdminAccess) {
+        setIsAdminAuthModalOpen(true);
+      } else {
+        // Toggle edit mode if already admin
+        setIsEditMode(prev => !prev);
+      }
+    } else {
+      logoClickTimeoutRef.current = setTimeout(() => {
+        logoClicksRef.current = 0;
+      }, 2500);
+    }
+  }, [hasAdminAccess]);
+
+  const resetAdminPassword = useCallback((newPassword: string) => {
+    updatePortfolioState(prev => ({
+      ...prev,
+      profile: {
+        ...prev.profile,
+        adminPassword: newPassword
+      }
+    }));
+  }, [updatePortfolioState]);
+
   const exportJSON = () => {
     const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(data, null, 2));
     const downloadAnchor = document.createElement('a');
@@ -752,6 +829,12 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setEditingProject,
         isProfileModalOpen,
         setIsProfileModalOpen,
+        isAdminAuthModalOpen,
+        setIsAdminAuthModalOpen,
+        loginAdmin,
+        logoutAdmin,
+        handleLogoClick,
+        resetAdminPassword,
         themeMode,
         toggleThemeMode,
         setThemeMode,

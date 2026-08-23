@@ -74,6 +74,8 @@ export interface ProfileInfo {
   behanceUrl?: string;
   dribbbleUrl?: string;
   githubUrl?: string;
+  adminPassword?: string;
+  adminSecurityEmail?: string;
 }
 
 export interface ClientSelection {

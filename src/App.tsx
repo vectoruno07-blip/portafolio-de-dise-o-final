@@ -10,6 +10,7 @@ import { ProjectDetailModal } from './components/ProjectDetailModal';
 import { ClientSummaryModal } from './components/ClientSummaryModal';
 import { EditProjectModal } from './components/EditProjectModal';
 import { EditProfileModal } from './components/EditProfileModal';
+import { AdminAuthModal } from './components/AdminAuthModal';
 import { AutoResponseModal } from './components/AutoResponseModal';
 import { QuoteManagerModal } from './components/QuoteManagerModal';
 import { FloatingWhatsAppButton } from './components/FloatingWhatsAppButton';
@@ -491,6 +492,7 @@ const MainContent: React.FC = () => {
       <QuoteManagerModal />
       <EditProjectModal />
       <EditProfileModal />
+      <AdminAuthModal />
 
       {/* Floating WhatsApp Action Widget */}
       <FloatingWhatsAppButton />

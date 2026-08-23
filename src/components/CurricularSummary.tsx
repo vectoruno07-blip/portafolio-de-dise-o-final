@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 
 export const CurricularSummary: React.FC = () => {
-  const { data, isEditMode, setIsProfileModalOpen, setIsSummaryModalOpen, themeMode, t, getButtonClass } = usePortfolio();
+  const { data, isEditMode, setIsProfileModalOpen, setIsSummaryModalOpen, themeMode, t, getButtonClass, handleLogoClick } = usePortfolio();
   const [isExpanded, setIsExpanded] = useState(false);
   const [showCharts, setShowCharts] = useState(false);
   const isDark = themeMode === 'dark';
@@ -189,7 +189,11 @@ export const CurricularSummary: React.FC = () => {
               ? 'bg-[#12131c]/90 border-white/10' 
               : 'bg-white/95 border-slate-200 shadow-slate-200/60'
           }`}>
-            <div className="flex flex-col items-center justify-center space-y-4 pt-2 w-full">
+            <div 
+              className="flex flex-col items-center justify-center space-y-4 pt-2 w-full cursor-pointer transition-transform active:scale-98"
+              onClick={handleLogoClick}
+              title="Víctor Hugo González - Estudio de Diseño (5 clics para autenticación)"
+            >
               <PersonalLogo size="xl" variant="color" showText={true} isCover={true} />
             </div>
 
