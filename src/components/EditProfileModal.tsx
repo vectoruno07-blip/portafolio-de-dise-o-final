@@ -61,56 +61,58 @@ export const EditProfileModal: React.FC = () => {
   const [newSocialIcon, setNewSocialIcon] = useState('instagram');
 
   useEffect(() => {
-    setFormData({ 
-      ...data.profile,
-      customLogoUrl: data.profile.customLogoUrl || '',
-      experienceValue: data.profile.experienceValue || '20+ Años',
-      experienceLabel: data.profile.experienceLabel || 'Trayectoria Profesional',
-      teachingValue: data.profile.teachingValue || '17 Años',
-      teachingLabel: data.profile.teachingLabel || 'Docencia Universitaria',
-      areasValue: data.profile.areasValue || '8 Áreas',
-      areasLabel: data.profile.areasLabel || 'Especialidades Gráficas',
-      interactiveValue: data.profile.interactiveValue || '100% Editable',
-      interactiveLabel: data.profile.interactiveLabel || 'Diseño Personalizable',
-      showInteractiveBadge: data.profile.showInteractiveBadge ?? true,
-      showLogoText: data.profile.showLogoText ?? true,
-      logoFontFamily: data.profile.logoFontFamily || 'GatsbyFLF',
-      logoLine1: data.profile.logoLine1 !== undefined ? data.profile.logoLine1 : 'ESTUDIO DE',
-      logoLine2: data.profile.logoLine2 !== undefined ? data.profile.logoLine2 : 'DISEÑO',
-      coverCustomLogoUrl: data.profile.coverCustomLogoUrl || '',
-      coverShowLogoText: data.profile.coverShowLogoText ?? true,
-      coverLogoLine1: data.profile.coverLogoLine1 !== undefined ? data.profile.coverLogoLine1 : 'ESTUDIO DE',
-      coverLogoLine2: data.profile.coverLogoLine2 !== undefined ? data.profile.coverLogoLine2 : 'DISEÑO',
-      coverLogoFontFamily: data.profile.coverLogoFontFamily || 'GatsbyFLF',
-      experienceBadgeText: data.profile.experienceBadgeText || '+20 años exp.',
-      portfolioSectionTitle: data.profile.portfolioSectionTitle || 'Trabajos Emblemáticos & Portafolio',
-      portfolioSectionSubtitle: data.profile.portfolioSectionSubtitle || '',
-      instagramUrl: data.profile.instagramUrl || '',
-      linkedinUrl: data.profile.linkedinUrl || '',
-      behanceUrl: data.profile.behanceUrl || '',
-      dribbbleUrl: data.profile.dribbbleUrl || '',
-      githubUrl: data.profile.githubUrl || ''
-    });
+    if (isProfileModalOpen) {
+      setFormData({ 
+        ...data.profile,
+        customLogoUrl: data.profile.customLogoUrl || '',
+        experienceValue: data.profile.experienceValue || '20+ Años',
+        experienceLabel: data.profile.experienceLabel || 'Trayectoria Profesional',
+        teachingValue: data.profile.teachingValue || '17 Años',
+        teachingLabel: data.profile.teachingLabel || 'Docencia Universitaria',
+        areasValue: data.profile.areasValue || '8 Áreas',
+        areasLabel: data.profile.areasLabel || 'Especialidades Gráficas',
+        interactiveValue: data.profile.interactiveValue || '100% Editable',
+        interactiveLabel: data.profile.interactiveLabel || 'Diseño Personalizable',
+        showInteractiveBadge: data.profile.showInteractiveBadge ?? true,
+        showLogoText: data.profile.showLogoText ?? true,
+        logoFontFamily: data.profile.logoFontFamily || 'GatsbyFLF',
+        logoLine1: data.profile.logoLine1 !== undefined ? data.profile.logoLine1 : 'ESTUDIO DE',
+        logoLine2: data.profile.logoLine2 !== undefined ? data.profile.logoLine2 : 'DISEÑO',
+        coverCustomLogoUrl: data.profile.coverCustomLogoUrl || '',
+        coverShowLogoText: data.profile.coverShowLogoText ?? true,
+        coverLogoLine1: data.profile.coverLogoLine1 !== undefined ? data.profile.coverLogoLine1 : 'ESTUDIO DE',
+        coverLogoLine2: data.profile.coverLogoLine2 !== undefined ? data.profile.coverLogoLine2 : 'DISEÑO',
+        coverLogoFontFamily: data.profile.coverLogoFontFamily || 'GatsbyFLF',
+        experienceBadgeText: data.profile.experienceBadgeText || '+20 años exp.',
+        portfolioSectionTitle: data.profile.portfolioSectionTitle || 'Trabajos Emblemáticos & Portafolio',
+        portfolioSectionSubtitle: data.profile.portfolioSectionSubtitle || '',
+        instagramUrl: data.profile.instagramUrl || '',
+        linkedinUrl: data.profile.linkedinUrl || '',
+        behanceUrl: data.profile.behanceUrl || '',
+        dribbbleUrl: data.profile.dribbbleUrl || '',
+        githubUrl: data.profile.githubUrl || ''
+      });
 
-    // Populate initial socialLinks
-    if (data.profile.socialLinks && data.profile.socialLinks.length > 0) {
-      setSocialLinks([...data.profile.socialLinks]);
-    } else {
-      const initialLinks: SocialLink[] = [];
-      if (data.profile.instagramUrl) initialLinks.push({ id: '1', name: 'Instagram', url: data.profile.instagramUrl, icon: 'instagram' });
-      if (data.profile.linkedinUrl) initialLinks.push({ id: '2', name: 'LinkedIn', url: data.profile.linkedinUrl, icon: 'linkedin' });
-      if (data.profile.behanceUrl) initialLinks.push({ id: '3', name: 'Behance', url: data.profile.behanceUrl, icon: 'behance' });
-      if (data.profile.dribbbleUrl) initialLinks.push({ id: '4', name: 'Dribbble', url: data.profile.dribbbleUrl, icon: 'dribbble' });
-      if (data.profile.githubUrl) initialLinks.push({ id: '5', name: 'GitHub', url: data.profile.githubUrl, icon: 'github' });
-      setSocialLinks(initialLinks);
+      // Populate initial socialLinks
+      if (data.profile.socialLinks && data.profile.socialLinks.length > 0) {
+        setSocialLinks([...data.profile.socialLinks]);
+      } else {
+        const initialLinks: SocialLink[] = [];
+        if (data.profile.instagramUrl) initialLinks.push({ id: '1', name: 'Instagram', url: data.profile.instagramUrl, icon: 'instagram' });
+        if (data.profile.linkedinUrl) initialLinks.push({ id: '2', name: 'LinkedIn', url: data.profile.linkedinUrl, icon: 'linkedin' });
+        if (data.profile.behanceUrl) initialLinks.push({ id: '3', name: 'Behance', url: data.profile.behanceUrl, icon: 'behance' });
+        if (data.profile.dribbbleUrl) initialLinks.push({ id: '4', name: 'Dribbble', url: data.profile.dribbbleUrl, icon: 'dribbble' });
+        if (data.profile.githubUrl) initialLinks.push({ id: '5', name: 'GitHub', url: data.profile.githubUrl, icon: 'github' });
+        setSocialLinks(initialLinks);
+      }
+
+      setSkillsInput((data.profile.skills || []).join('\n'));
+      setToolsInput((data.profile.tools || []).join(', '));
+      setButtonColorSelection(data.buttonColor || 'magenta');
+      setIsAddingSocial(false);
+      setEditingSocialId(null);
     }
-
-    setSkillsInput((data.profile.skills || []).join('\n'));
-    setToolsInput((data.profile.tools || []).join(', '));
-    setButtonColorSelection(data.buttonColor || 'magenta');
-    setIsAddingSocial(false);
-    setEditingSocialId(null);
-  }, [data.profile, data.buttonColor, isProfileModalOpen]);
+  }, [isProfileModalOpen]);
 
   if (!isProfileModalOpen) return null;
 
