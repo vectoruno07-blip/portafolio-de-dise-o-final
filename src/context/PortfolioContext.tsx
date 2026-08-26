@@ -184,6 +184,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   });
   const [isFirestoreConnected, setIsFirestoreConnected] = useState<boolean>(false);
   const dataRef = useRef<PortfolioData>(data);
+  const lastLocalEditTimeRef = useRef<number>(0);
   useEffect(() => {
     dataRef.current = data;
   }, [data]);
@@ -246,14 +247,21 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     // 1. Listen for Portfolio Data changes
     const portfolioDocRef = doc(db, 'portfolio_data', 'main');
-    const unsubPortfolio = onSnapshot(portfolioDocRef, (docSnap) => {
+    const unsubPortfolio = onSnapshot(portfolioDocRef, { includeMetadataChanges: true }, (docSnap) => {
       if (docSnap.exists()) {
+        // If local client has pending writes or just made an update within 3 seconds, do not overwrite optimistic local state
+        if (docSnap.metadata.hasPendingWrites || (Date.now() - lastLocalEditTimeRef.current < 3000)) {
+          return;
+        }
         const remoteData = docSnap.data() as PortfolioData;
-        setData(remoteData);
-        try {
-          localStorage.setItem('vhg_portfolio_cached_data', JSON.stringify(remoteData));
-        } catch (e) {}
-        setIsFirestoreConnected(true);
+        if (remoteData && Array.isArray(remoteData.projects) && remoteData.projects.length > 0) {
+          setData(remoteData);
+          dataRef.current = remoteData;
+          try {
+            localStorage.setItem('vhg_portfolio_cached_data', JSON.stringify(remoteData));
+          } catch (e) {}
+          setIsFirestoreConnected(true);
+        }
       } else {
         // Bootstrap initial portfolio data document in Firestore
         setDoc(portfolioDocRef, INITIAL_PORTFOLIO_DATA)
@@ -312,6 +320,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // Atomic state updater that protects against race conditions and stale closures
   const updatePortfolioState = useCallback((updater: (current: PortfolioData) => PortfolioData) => {
+    lastLocalEditTimeRef.current = Date.now();
     const current = dataRef.current;
     const next = updater(current);
     dataRef.current = next;

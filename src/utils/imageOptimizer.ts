@@ -83,9 +83,9 @@ export const optimizeImage = async (
   options: OptimizeOptions = {}
 ): Promise<OptimizationResult> => {
   const {
-    maxWidth = 1920,
-    maxHeight = 1920,
-    quality = 0.90,
+    maxWidth = 1440,
+    maxHeight = 1440,
+    quality = 0.84,
     outputFormat = 'image/webp'
   } = options;
 
@@ -143,7 +143,28 @@ export const optimizeImage = async (
     finalFormat = 'image/jpeg';
   }
 
-  const optimizedSize = Math.round((dataUrl.length * 3) / 4);
+  // Adaptive second-pass: If payload is still > 180KB, compress slightly more to stay ultra-light
+  let optimizedSize = Math.round((dataUrl.length * 3) / 4);
+  if (optimizedSize > 180 * 1024) {
+    const secondaryCanvas = document.createElement('canvas');
+    const scale = Math.min(1, 1200 / Math.max(targetWidth, targetHeight));
+    secondaryCanvas.width = Math.round(targetWidth * scale);
+    secondaryCanvas.height = Math.round(targetHeight * scale);
+    const secCtx = secondaryCanvas.getContext('2d');
+    if (secCtx) {
+      secCtx.imageSmoothingEnabled = true;
+      secCtx.imageSmoothingQuality = 'high';
+      secCtx.drawImage(canvas, 0, 0, secondaryCanvas.width, secondaryCanvas.height);
+      const secondaryDataUrl = secondaryCanvas.toDataURL(finalFormat, 0.78);
+      if (secondaryDataUrl && secondaryDataUrl.length < dataUrl.length) {
+        dataUrl = secondaryDataUrl;
+        targetWidth = secondaryCanvas.width;
+        targetHeight = secondaryCanvas.height;
+        optimizedSize = Math.round((dataUrl.length * 3) / 4);
+      }
+    }
+  }
+
   const savingsPercent = originalSize > 0 
     ? Math.max(0, Math.round(((originalSize - optimizedSize) / originalSize) * 100))
     : 0;

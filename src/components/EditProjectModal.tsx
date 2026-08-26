@@ -144,24 +144,42 @@ export const EditProjectModal: React.FC = () => {
 
   if (!editingProject) return null;
 
-  // Add photo via file upload with automatic optimization
-  const handleImageFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Helper to check if an image URL is a default stock placeholder
+  const isDefaultStockPlaceholder = (url: string) => {
+    if (!url) return true;
+    return url.includes('images.unsplash.com/photo-1542744094-3a31f272c490') || 
+           url.includes('images.unsplash.com/photo-1542744094');
+  };
+
+  // Add or Replace photo via file upload with automatic optimization
+  const handleImageFileUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>, 
+    replaceCover: boolean = false
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setIsOptimizingImage(true);
     try {
-      // Optimize image maintaining high fidelity (bicubic canvas downsampling up to 1920px max dimension)
+      // Optimize image maintaining high fidelity (bicubic canvas downsampling up to 1440px max dimension)
       const optResult = await optimizeImage(file, {
-        maxWidth: 1920,
-        maxHeight: 1920,
-        quality: 0.90,
+        maxWidth: 1440,
+        maxHeight: 1440,
+        quality: 0.85,
         outputFormat: 'image/webp'
       });
 
       const optimizedUrl = optResult.dataUrl;
 
       setGalleryImages(prev => {
+        // If replacing cover or if the only existing image was the default unsplash stock photo
+        if (replaceCover || prev.length === 0 || (prev.length === 1 && isDefaultStockPlaceholder(prev[0]))) {
+          const rest = prev.length > 1 ? prev.slice(1) : [];
+          setFormData(f => ({ ...f, imageUrl: optimizedUrl }));
+          return [optimizedUrl, ...rest];
+        }
+
+        // Otherwise append as additional photo
         const next = [...prev, optimizedUrl];
         if (next.length === 1) {
           setFormData(f => ({ ...f, imageUrl: optimizedUrl }));
@@ -173,7 +191,7 @@ export const EditProjectModal: React.FC = () => {
         ? ` (${formatBytes(optResult.originalSize)} ➔ ${formatBytes(optResult.optimizedSize)}, -${optResult.savingsPercent}% peso)`
         : ` (${formatBytes(optResult.optimizedSize)})`;
 
-      setOptimizationToast(`✨ Foto optimizada a ${optResult.width}×${optResult.height}px en calidad HD${savingsMsg}`);
+      setOptimizationToast(`✨ Portada/Foto optimizada en HD lista${savingsMsg}`);
       setTimeout(() => setOptimizationToast(null), 5000);
     } catch (err) {
       console.error(err);
@@ -183,6 +201,11 @@ export const EditProjectModal: React.FC = () => {
         const result = reader.result as string;
         if (result) {
           setGalleryImages(prev => {
+            if (replaceCover || prev.length === 0 || (prev.length === 1 && isDefaultStockPlaceholder(prev[0]))) {
+              const rest = prev.length > 1 ? prev.slice(1) : [];
+              setFormData(f => ({ ...f, imageUrl: result }));
+              return [result, ...rest];
+            }
             const next = [...prev, result];
             if (next.length === 1) {
               setFormData(f => ({ ...f, imageUrl: result }));
@@ -205,6 +228,10 @@ export const EditProjectModal: React.FC = () => {
     if (!trimmed) return;
 
     setGalleryImages(prev => {
+      if (prev.length === 1 && isDefaultStockPlaceholder(prev[0])) {
+        setFormData(f => ({ ...f, imageUrl: trimmed }));
+        return [trimmed];
+      }
       const next = [...prev, trimmed];
       if (next.length === 1) {
         setFormData(f => ({ ...f, imageUrl: trimmed }));
@@ -539,7 +566,75 @@ export const EditProjectModal: React.FC = () => {
               </div>
             )}
 
-            {/* Photo adding controls */}
+            {/* Primary Cover Highlight Box */}
+            {galleryImages.length > 0 && (
+              <div className={`p-3.5 rounded-2xl border mb-3 flex flex-col sm:flex-row items-center gap-4 ${
+                isDark ? 'bg-pink-500/10 border-pink-500/30' : 'bg-pink-50/80 border-pink-200'
+              }`}>
+                <div className="w-full sm:w-40 h-28 rounded-xl overflow-hidden border border-pink-500/30 relative bg-neutral-950 shrink-0 shadow-md">
+                  <img 
+                    src={galleryImages[0]} 
+                    alt="Portada Principal" 
+                    className="w-full h-full object-cover" 
+                  />
+                  <div className="absolute top-2 left-2 px-2 py-0.5 bg-pink-600 text-white text-[9px] font-black rounded-md flex items-center gap-1 shadow-sm">
+                    <Star className="w-2.5 h-2.5 fill-current" />
+                    <span>Portada Principal</span>
+                  </div>
+                </div>
+
+                <div className="flex-1 w-full space-y-2">
+                  <div>
+                    <h4 className={`text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                      {isDefaultStockPlaceholder(galleryImages[0]) ? 'Portada Provisional' : 'Portada Principal Activa'}
+                    </h4>
+                    <p className={`text-[11px] mt-0.5 ${isDark ? 'text-neutral-400' : 'text-slate-600'}`}>
+                      {isDefaultStockPlaceholder(galleryImages[0]) 
+                        ? 'Sube tu imagen de portada desde tu computador para sustituir la imagen por defecto.' 
+                        : 'Esta fotografía será la portada principal en la cuadrícula del portafolio.'}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    <label className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl cursor-pointer text-xs font-bold bg-pink-600 hover:bg-pink-500 text-white transition-all shadow-sm active:scale-98 ${
+                      isOptimizingImage ? 'opacity-50 pointer-events-none' : ''
+                    }`}>
+                      {isOptimizingImage ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 text-white animate-spin" />
+                          <span>Optimizando...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>{isDefaultStockPlaceholder(galleryImages[0]) ? 'Subir mi Portada' : 'Cambiar Portada'}</span>
+                        </>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleImageFileUpload(e, true)}
+                        disabled={isOptimizingImage}
+                        className="hidden"
+                      />
+                    </label>
+
+                    <button
+                      type="button"
+                      onClick={() => setAdjustingImageIdx(0)}
+                      className={`px-3 py-1.5 text-xs font-bold rounded-xl border flex items-center gap-1.5 transition-colors cursor-pointer ${
+                        isDark ? 'bg-white/10 hover:bg-white/20 text-neutral-200 border-white/10' : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300'
+                      }`}
+                    >
+                      <Sliders className="w-3.5 h-3.5 text-pink-400" />
+                      <span>Ajustar / Recortar</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Photo adding controls for additional gallery images */}
             <div className="flex flex-col sm:flex-row gap-2 mb-3">
               <input
                 type="text"
@@ -563,7 +658,7 @@ export const EditProjectModal: React.FC = () => {
                 className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-pink-600 hover:bg-pink-500 text-white text-xs font-bold rounded-xl transition-colors disabled:opacity-40 cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>Añadir Foto</span>
+                <span>Añadir por URL</span>
               </button>
               <label className={`flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl cursor-pointer text-xs font-bold border shrink-0 transition-colors ${
                 isDark ? 'bg-white/10 hover:bg-white/15 text-neutral-200 border-white/15' : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300'
@@ -571,18 +666,18 @@ export const EditProjectModal: React.FC = () => {
                 {isOptimizingImage ? (
                   <>
                     <Loader2 className="w-3.5 h-3.5 text-pink-500 animate-spin" />
-                    <span>Optimizando en HD...</span>
+                    <span>Optimizando...</span>
                   </>
                 ) : (
                   <>
-                    <Upload className="w-3.5 h-3.5 text-pink-500" />
-                    <span>Subir de tu Equipo</span>
+                    <Plus className="w-3.5 h-3.5 text-pink-500" />
+                    <span>Añadir Foto Extra</span>
                   </>
                 )}
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={handleImageFileUpload}
+                  onChange={(e) => handleImageFileUpload(e, false)}
                   disabled={isOptimizingImage}
                   className="hidden"
                 />
