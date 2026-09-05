@@ -168,6 +168,32 @@ const INITIAL_QUOTE_REQUESTS: QuoteRequest[] = [
   }
 ];
 
+const mergePortfolioData = (local: PortfolioData, remote: PortfolioData): PortfolioData => {
+  const mergedProjects = remote.projects.map(remoteProj => {
+    const localProj = local.projects.find(p => p.id === remoteProj.id);
+    if (localProj) {
+      const hasLocalCustomImg = localProj.imageUrl?.startsWith('data:') || (localProj.images && localProj.images.some(img => img.startsWith('data:')));
+      if (hasLocalCustomImg) {
+        return localProj;
+      }
+    }
+    return remoteProj;
+  });
+
+  const remoteProjectIds = new Set(remote.projects.map(p => p.id));
+  const localExtraProjects = local.projects.filter(p => !remoteProjectIds.has(p.id));
+
+  return {
+    ...remote,
+    projects: [...localExtraProjects, ...mergedProjects],
+    profile: {
+      ...remote.profile,
+      customLogoUrl: local.profile?.customLogoUrl?.startsWith('data:') ? local.profile.customLogoUrl : (remote.profile?.customLogoUrl || local.profile?.customLogoUrl),
+      avatarUrl: local.profile?.avatarUrl?.startsWith('data:') ? local.profile.avatarUrl : (remote.profile?.avatarUrl || local.profile?.avatarUrl),
+    }
+  };
+};
+
 const PortfolioContext = createContext<PortfolioContextType | undefined>(undefined);
 
 export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -255,10 +281,11 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         }
         const remoteData = docSnap.data() as PortfolioData;
         if (remoteData && Array.isArray(remoteData.projects) && remoteData.projects.length > 0) {
-          setData(remoteData);
-          dataRef.current = remoteData;
+          const merged = mergePortfolioData(dataRef.current, remoteData);
+          setData(merged);
+          dataRef.current = merged;
           try {
-            localStorage.setItem('vhg_portfolio_cached_data', JSON.stringify(remoteData));
+            localStorage.setItem('vhg_portfolio_cached_data', JSON.stringify(merged));
           } catch (e) {}
           setIsFirestoreConnected(true);
         }
