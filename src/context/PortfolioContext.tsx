@@ -169,23 +169,36 @@ const INITIAL_QUOTE_REQUESTS: QuoteRequest[] = [
 ];
 
 const mergePortfolioData = (local: PortfolioData, remote: PortfolioData): PortfolioData => {
-  const mergedProjects = remote.projects.map(remoteProj => {
-    const localProj = local.projects.find(p => p.id === remoteProj.id);
-    if (localProj) {
-      const hasLocalCustomImg = localProj.imageUrl?.startsWith('data:') || (localProj.images && localProj.images.some(img => img.startsWith('data:')));
-      if (hasLocalCustomImg) {
-        return localProj;
-      }
-    }
-    return remoteProj;
-  });
+  // If local has fewer projects than remote, it likely means items were deleted locally.
+  // Respect local deletions if they occurred recently or keep remote as master except for local custom edits.
+  const localProjectIds = new Set(local.projects.map(p => p.id));
+  
+  // Filter out remote projects that were explicitly deleted in local state (i.e. present in remote but missing in local)
+  const activeRemoteProjects = remote.projects.filter(rp => localProjectIds.has(rp.id) || !local.projects.some(lp => lp.id === rp.id && lp.title));
+  
+  // Actually, a simpler and robust way: 
+  // If local explicitly deleted a project, local.projects won't have it.
+  // Let's build the final project list based on local's project IDs order and presence, merged with remote data for non-deleted items.
+  const localMap = new Map(local.projects.map(p => [p.id, p]));
+  const remoteMap = new Map(remote.projects.map(p => [p.id, p]));
 
-  const remoteProjectIds = new Set(remote.projects.map(p => p.id));
-  const localExtraProjects = local.projects.filter(p => !remoteProjectIds.has(p.id));
+  // Start with local projects (this respects local additions AND local deletions)
+  const mergedProjects: ProjectItem[] = [];
+  
+  for (const [id, localProj] of localMap.entries()) {
+    const remoteProj = remoteMap.get(id);
+    if (remoteProj) {
+      const hasLocalCustomImg = localProj.imageUrl?.startsWith('data:') || (localProj.images && localProj.images.some(img => img.startsWith('data:')));
+      mergedProjects.push(hasLocalCustomImg ? localProj : remoteProj);
+    } else {
+      // Local-only project (newly added)
+      mergedProjects.push(localProj);
+    }
+  }
 
   return {
     ...remote,
-    projects: [...localExtraProjects, ...mergedProjects],
+    projects: mergedProjects,
     profile: {
       ...remote.profile,
       customLogoUrl: local.profile?.customLogoUrl?.startsWith('data:') ? local.profile.customLogoUrl : (remote.profile?.customLogoUrl || local.profile?.customLogoUrl),
