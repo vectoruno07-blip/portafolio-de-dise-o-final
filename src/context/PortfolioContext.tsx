@@ -169,41 +169,46 @@ const INITIAL_QUOTE_REQUESTS: QuoteRequest[] = [
 ];
 
 const mergePortfolioData = (local: PortfolioData, remote: PortfolioData): PortfolioData => {
-  // If local has fewer projects than remote, it likely means items were deleted locally.
-  // Respect local deletions if they occurred recently or keep remote as master except for local custom edits.
-  const localProjectIds = new Set(local.projects.map(p => p.id));
-  
-  // Filter out remote projects that were explicitly deleted in local state (i.e. present in remote but missing in local)
-  const activeRemoteProjects = remote.projects.filter(rp => localProjectIds.has(rp.id) || !local.projects.some(lp => lp.id === rp.id && lp.title));
-  
-  // Actually, a simpler and robust way: 
-  // If local explicitly deleted a project, local.projects won't have it.
-  // Let's build the final project list based on local's project IDs order and presence, merged with remote data for non-deleted items.
+  if (JSON.stringify(local) === JSON.stringify(remote)) {
+    return remote;
+  }
+
   const localMap = new Map(local.projects.map(p => [p.id, p]));
   const remoteMap = new Map(remote.projects.map(p => [p.id, p]));
 
-  // Start with local projects (this respects local additions AND local deletions)
   const mergedProjects: ProjectItem[] = [];
   
+  // Preserve all local projects (including user text edits, image edits, and new additions)
   for (const [id, localProj] of localMap.entries()) {
-    const remoteProj = remoteMap.get(id);
-    if (remoteProj) {
-      const hasLocalCustomImg = localProj.imageUrl?.startsWith('data:') || (localProj.images && localProj.images.some(img => img.startsWith('data:')));
-      mergedProjects.push(hasLocalCustomImg ? localProj : remoteProj);
-    } else {
-      // Local-only project (newly added)
-      mergedProjects.push(localProj);
+    mergedProjects.push(localProj);
+  }
+
+  // Add remote projects that are genuinely new (not present in initial defaults) and not in local
+  for (const [id, remoteProj] of remoteMap.entries()) {
+    if (!localMap.has(id)) {
+      const wasInInitial = INITIAL_PORTFOLIO_DATA.projects.some(ip => ip.id === id);
+      if (!wasInInitial) {
+        mergedProjects.push(remoteProj);
+      }
     }
   }
 
+  const mergedProfile: ProfileInfo = {
+    ...remote.profile,
+    ...local.profile,
+  };
+
+  const mergedCategories = local.categories && local.categories.length > 0 ? local.categories : remote.categories;
+
   return {
     ...remote,
+    ...local,
     projects: mergedProjects,
-    profile: {
-      ...remote.profile,
-      customLogoUrl: local.profile?.customLogoUrl?.startsWith('data:') ? local.profile.customLogoUrl : (remote.profile?.customLogoUrl || local.profile?.customLogoUrl),
-      avatarUrl: local.profile?.avatarUrl?.startsWith('data:') ? local.profile.avatarUrl : (remote.profile?.avatarUrl || local.profile?.avatarUrl),
-    }
+    profile: mergedProfile,
+    categories: mergedCategories,
+    themeColor: local.themeColor || remote.themeColor,
+    buttonColor: local.buttonColor || remote.buttonColor,
+    themeMode: local.themeMode || remote.themeMode,
   };
 };
 
