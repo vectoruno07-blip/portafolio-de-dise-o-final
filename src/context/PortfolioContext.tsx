@@ -66,15 +66,15 @@ interface PortfolioContextType {
   setIsAutoResponseModalOpen: (open: boolean) => void;
   
   // Data management
-  updateProfile: (profile: ProfileInfo, buttonColor?: string) => Promise<void>;
+  updateProfile: (profile: ProfileInfo, buttonColor?: string) => void;
   addProject: (project: Omit<ProjectItem, 'id'>) => void;
   updateProject: (project: ProjectItem) => void;
-  deleteProject: (id: string) => Promise<void>;
+  deleteProject: (id: string) => void;
   addCategory: (category: Omit<CategoryInfo, 'id'> & { id?: string }) => CategoryInfo;
   updateCategory: (category: CategoryInfo) => void;
   deleteCategory: (id: string, reassignToCategoryId?: string) => void;
-  resetToDefaults: () => Promise<void>;
-  resetToBlankPortfolio: () => Promise<void>;
+  resetToDefaults: () => void;
+  resetToBlankPortfolio: () => void;
   setThemeColor: (color: PortfolioData['themeColor']) => void;
   setButtonColor: (color: string) => void;
   getButtonClass: () => string;
@@ -350,23 +350,22 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, []);
 
-  // Atomic state updater that protects against race conditions, adds loading states, and ensures backend sync before UI state update
-  const updatePortfolioState = useCallback(async (updater: (current: PortfolioData) => PortfolioData): Promise<void> => {
+  // Atomic state updater with immediate optimistic UI updates and background Firestore persistence
+  const updatePortfolioState = useCallback((updater: (current: PortfolioData) => PortfolioData) => {
     setIsPersistenceLoading(true);
-    try {
-      lastLocalEditTimeRef.current = Date.now();
-      const current = dataRef.current;
-      const next = updater(current);
-      // Await successful backend write before updating local state
-      await persistPortfolioData(next);
-      dataRef.current = next;
-      setData(next);
-    } catch (error) {
-      console.error('Failed to persist portfolio update to backend:', error);
-      throw error;
-    } finally {
-      setIsPersistenceLoading(false);
-    }
+    lastLocalEditTimeRef.current = Date.now();
+    const current = dataRef.current;
+    const next = updater(current);
+    dataRef.current = next;
+    setData(next);
+    
+    persistPortfolioData(next)
+      .catch((error) => {
+        console.error('Failed to persist portfolio update to backend:', error);
+      })
+      .finally(() => {
+        setIsPersistenceLoading(false);
+      });
   }, [persistPortfolioData]);
 
   const submitQuoteRequest = (customSelection?: ClientSelection): QuoteRequest => {
@@ -555,17 +554,13 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     });
   };
 
-  // Data Modification Handlers - Direct Firestore Persistence with Loading & Try-Catch
-  const updateProfile = async (profile: ProfileInfo, buttonColor?: string): Promise<void> => {
-    try {
-      await updatePortfolioState(prev => ({
-        ...prev,
-        profile,
-        ...(buttonColor ? { buttonColor } : {})
-      }));
-    } catch (e) {
-      console.error('Error updating profile:', e);
-    }
+  // Data Modification Handlers - Instant Optimistic Updates with Background Persistence
+  const updateProfile = (profile: ProfileInfo, buttonColor?: string) => {
+    updatePortfolioState(prev => ({
+      ...prev,
+      profile,
+      ...(buttonColor ? { buttonColor } : {})
+    }));
   };
 
   const addProject = (projectData: Omit<ProjectItem, 'id'>) => {
@@ -587,19 +582,15 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }));
   };
 
-  const deleteProject = async (id: string): Promise<void> => {
-    try {
-      await updatePortfolioState(prev => ({
-        ...prev,
-        projects: prev.projects.filter(p => p.id !== id)
-      }));
-      setClientSelection(prev => ({
-        ...prev,
-        selectedProjects: prev.selectedProjects.filter(pId => pId !== id)
-      }));
-    } catch (e) {
-      console.error('Error deleting project:', e);
-    }
+  const deleteProject = (id: string) => {
+    updatePortfolioState(prev => ({
+      ...prev,
+      projects: prev.projects.filter(p => p.id !== id)
+    }));
+    setClientSelection(prev => ({
+      ...prev,
+      selectedProjects: prev.selectedProjects.filter(pId => pId !== id)
+    }));
   };
 
   const addCategory = (categoryData: Omit<CategoryInfo, 'id'> & { id?: string }): CategoryInfo => {
@@ -678,38 +669,30 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  const resetToDefaults = async (): Promise<void> => {
+  const resetToDefaults = () => {
     if (window.confirm('¿Deseas restablecer todos los proyectos y datos al estado inicial del portafolio de Víctor Hugo González?')) {
-      try {
-        await updatePortfolioState(() => INITIAL_PORTFOLIO_DATA);
-        setClientSelection(DEFAULT_CLIENT_SELECTION);
-      } catch (e) {
-        console.error('Error resetting to defaults:', e);
-      }
+      updatePortfolioState(() => INITIAL_PORTFOLIO_DATA);
+      setClientSelection(DEFAULT_CLIENT_SELECTION);
     }
   };
 
-  const resetToBlankPortfolio = async (): Promise<void> => {
+  const resetToBlankPortfolio = () => {
     if (window.confirm('¿Estás seguro de reiniciar el portafolio en blanco (sin trabajos, categorías vacías y perfil limpio) para empezar desde cero?')) {
-      try {
-        await updatePortfolioState(prev => ({
-          ...prev,
-          projects: [],
-          categories: [],
-          profile: {
-            ...prev.profile,
-            name: 'Tu Nombre / Estudio',
-            title: 'Diseñador / Creador Profesional',
-            bio: 'Escribe aquí tu biografía y descripción profesional para comenzar a mostrar tus servicios y trayectoria.',
-            avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
-            customLogoUrl: ''
-          }
-        }));
-        clearAllQuoteRequests();
-        setClientSelection(DEFAULT_CLIENT_SELECTION);
-      } catch (e) {
-        console.error('Error resetting to blank portfolio:', e);
-      }
+      updatePortfolioState(prev => ({
+        ...prev,
+        projects: [],
+        categories: [],
+        profile: {
+          ...prev.profile,
+          name: 'Tu Nombre / Estudio',
+          title: 'Diseñador / Creador Profesional',
+          bio: 'Escribe aquí tu biografía y descripción profesional para comenzar a mostrar tus servicios y trayectoria.',
+          avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
+          customLogoUrl: ''
+        }
+      }));
+      clearAllQuoteRequests();
+      setClientSelection(DEFAULT_CLIENT_SELECTION);
     }
   };
 
