@@ -439,3 +439,53 @@ export const INITIAL_PORTFOLIO_DATA: PortfolioData = {
     }
   ]
 };
+
+export const INITIAL_BLANK_PORTFOLIO_DATA: PortfolioData = {
+  profile: {
+    name: 'Tu Nombre / Estudio',
+    title: 'Diseñador / Creador Profesional',
+    subTitle: 'Estudio de Diseño',
+    bio: 'Escribe aquí tu biografía y descripción profesional para comenzar a mostrar tus servicios y trayectoria.',
+    teachingExperience: '',
+    skills: [],
+    tools: [],
+    email: 'tucorreo@example.com',
+    phone: '',
+    location: 'Tu Ciudad / Ubicación',
+    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
+    customLogoUrl: '',
+    experienceValue: '0 Años',
+    experienceLabel: 'Experiencia',
+    teachingValue: '0 Años',
+    teachingLabel: 'Docencia',
+    areasValue: '0 Áreas',
+    areasLabel: 'Especialidades',
+    interactiveValue: '100% Personalizable',
+    interactiveLabel: 'Diseño Libre',
+    showInteractiveBadge: true,
+    showLogoText: true,
+    logoFontFamily: 'GatsbyFLF',
+    logoLine1: 'MI ESTUDIO',
+    logoLine2: 'DE DISEÑO',
+    coverCustomLogoUrl: '',
+    coverShowLogoText: true,
+    coverLogoLine1: 'MI ESTUDIO',
+    coverLogoLine2: 'DE DISEÑO',
+    coverLogoFontFamily: 'GatsbyFLF',
+    coverLogoSize: 'xl',
+    experienceBadgeText: 'Portfolio v1.0',
+    portfolioSectionTitle: 'Portafolio de Proyectos',
+    socialLinks: [],
+    instagramUrl: '',
+    linkedinUrl: '',
+    behanceUrl: '',
+    dribbbleUrl: '',
+    githubUrl: ''
+  },
+  themeColor: 'magenta-blue',
+  buttonColor: 'magenta',
+  themeMode: 'dark',
+  categories: [],
+  projects: []
+};
+

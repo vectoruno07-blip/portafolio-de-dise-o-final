@@ -46,7 +46,8 @@ export const EditProfileModal: React.FC = () => {
     isProfileModalOpen, 
     setIsProfileModalOpen,
     themeMode,
-    setButtonColor 
+    setButtonColor,
+    resetToBlankPortfolio
   } = usePortfolio();
 
   const isDark = themeMode === 'dark';
@@ -1439,7 +1440,7 @@ export const EditProfileModal: React.FC = () => {
             <h4 className={`text-xs font-bold uppercase tracking-wider mb-3 ${isDark ? 'text-neutral-400' : 'text-slate-500'}`}>
               Copia de Seguridad &amp; Restauración
             </h4>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 mb-4">
               <button
                 type="button"
                 onClick={exportJSON}
@@ -1463,6 +1464,29 @@ export const EditProfileModal: React.FC = () => {
                   className="hidden"
                 />
               </label>
+            </div>
+
+            {/* Danger Zone: Reset to Blank */}
+            <div className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 ${
+              isDark ? 'bg-red-500/10 border-red-500/30 text-red-300' : 'bg-red-50 border-red-200 text-red-800'
+            }`}>
+              <div className="flex items-center gap-2.5">
+                <Trash2 className="w-4 h-4 text-red-500 shrink-0" />
+                <div>
+                  <div className="text-xs font-bold">Portafolio en Blanco</div>
+                  <div className={`text-[11px] ${isDark ? 'text-red-300/80' : 'text-red-700/80'}`}>Borra todos los proyectos y datos para empezar desde cero.</div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (resetToBlankPortfolio) resetToBlankPortfolio();
+                  setIsProfileModalOpen(false);
+                }}
+                className="px-3.5 py-2 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-bold shadow-md shadow-red-600/30 transition-all cursor-pointer shrink-0"
+              >
+                Reiniciar en Blanco
+              </button>
             </div>
           </div>
 

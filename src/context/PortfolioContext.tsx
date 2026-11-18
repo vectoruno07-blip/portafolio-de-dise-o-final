@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { PortfolioData, ProjectItem, CategoryInfo, ProfileInfo, ClientSelection, Language, QuoteRequest } from '../types';
-import { INITIAL_PORTFOLIO_DATA } from '../data/initialPortfolioData';
+import { INITIAL_PORTFOLIO_DATA, INITIAL_BLANK_PORTFOLIO_DATA } from '../data/initialPortfolioData';
 import { translations } from '../translations';
 import { 
   db, 
@@ -66,14 +66,15 @@ interface PortfolioContextType {
   setIsAutoResponseModalOpen: (open: boolean) => void;
   
   // Data management
-  updateProfile: (profile: ProfileInfo, buttonColor?: string) => void;
+  updateProfile: (profile: ProfileInfo, buttonColor?: string) => Promise<void>;
   addProject: (project: Omit<ProjectItem, 'id'>) => void;
   updateProject: (project: ProjectItem) => void;
-  deleteProject: (id: string) => void;
+  deleteProject: (id: string) => Promise<void>;
   addCategory: (category: Omit<CategoryInfo, 'id'> & { id?: string }) => CategoryInfo;
   updateCategory: (category: CategoryInfo) => void;
   deleteCategory: (id: string, reassignToCategoryId?: string) => void;
-  resetToDefaults: () => void;
+  resetToDefaults: () => Promise<void>;
+  resetToBlankPortfolio: () => Promise<void>;
   setThemeColor: (color: PortfolioData['themeColor']) => void;
   setButtonColor: (color: string) => void;
   getButtonClass: () => string;
@@ -113,8 +114,9 @@ interface PortfolioContextType {
   toggleLanguage: () => void;
   t: typeof translations['es'];
 
-  // Firestore Status
+  // Firestore Status & Loading State
   isFirestoreConnected: boolean;
+  isPersistenceLoading: boolean;
 }
 
 const DEFAULT_CLIENT_SELECTION: ClientSelection = {
@@ -173,37 +175,17 @@ const mergePortfolioData = (local: PortfolioData, remote: PortfolioData): Portfo
     return remote;
   }
 
-  const localMap = new Map(local.projects.map(p => [p.id, p]));
-  const remoteMap = new Map(remote.projects.map(p => [p.id, p]));
-
-  const mergedProjects: ProjectItem[] = [];
-  
-  // Preserve all local projects (including user text edits, image edits, and new additions)
-  for (const [id, localProj] of localMap.entries()) {
-    mergedProjects.push(localProj);
-  }
-
-  // Add remote projects that are genuinely new (not present in initial defaults) and not in local
-  for (const [id, remoteProj] of remoteMap.entries()) {
-    if (!localMap.has(id)) {
-      const wasInInitial = INITIAL_PORTFOLIO_DATA.projects.some(ip => ip.id === id);
-      if (!wasInInitial) {
-        mergedProjects.push(remoteProj);
-      }
-    }
-  }
-
   const mergedProfile: ProfileInfo = {
     ...remote.profile,
     ...local.profile,
   };
 
-  const mergedCategories = local.categories && local.categories.length > 0 ? local.categories : remote.categories;
+  const mergedCategories = local.categories !== undefined ? local.categories : remote.categories;
 
   return {
     ...remote,
     ...local,
-    projects: mergedProjects,
+    projects: local.projects, // Local projects list is authoritative for deletions and additions
     profile: mergedProfile,
     categories: mergedCategories,
     themeColor: local.themeColor || remote.themeColor,
@@ -298,7 +280,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           return;
         }
         const remoteData = docSnap.data() as PortfolioData;
-        if (remoteData && Array.isArray(remoteData.projects) && remoteData.projects.length > 0) {
+        if (remoteData && Array.isArray(remoteData.projects)) {
           const merged = mergePortfolioData(dataRef.current, remoteData);
           setData(merged);
           dataRef.current = merged;
@@ -350,27 +332,41 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     };
   }, []);
 
-  // Helper to persist data updates to Firestore and local storage
-  const persistPortfolioData = useCallback((newData: PortfolioData) => {
+  const [isPersistenceLoading, setIsPersistenceLoading] = useState<boolean>(false);
+
+  // Helper to persist data updates to Firestore and local storage with error handling
+  const persistPortfolioData = useCallback(async (newData: PortfolioData): Promise<void> => {
     try {
       localStorage.setItem('vhg_portfolio_cached_data', JSON.stringify(newData));
     } catch (e) {
       console.warn('Error persisting portfolio cache:', e);
     }
     const portfolioDocRef = doc(db, 'portfolio_data', 'main');
-    setDoc(portfolioDocRef, newData, { merge: true }).catch((err) => {
+    try {
+      await setDoc(portfolioDocRef, newData);
+    } catch (err) {
       handleFirestoreError(err, OperationType.UPDATE, 'portfolio_data/main');
-    });
+      throw err;
+    }
   }, []);
 
-  // Atomic state updater that protects against race conditions and stale closures
-  const updatePortfolioState = useCallback((updater: (current: PortfolioData) => PortfolioData) => {
-    lastLocalEditTimeRef.current = Date.now();
-    const current = dataRef.current;
-    const next = updater(current);
-    dataRef.current = next;
-    setData(next);
-    persistPortfolioData(next);
+  // Atomic state updater that protects against race conditions, adds loading states, and ensures backend sync before UI state update
+  const updatePortfolioState = useCallback(async (updater: (current: PortfolioData) => PortfolioData): Promise<void> => {
+    setIsPersistenceLoading(true);
+    try {
+      lastLocalEditTimeRef.current = Date.now();
+      const current = dataRef.current;
+      const next = updater(current);
+      // Await successful backend write before updating local state
+      await persistPortfolioData(next);
+      dataRef.current = next;
+      setData(next);
+    } catch (error) {
+      console.error('Failed to persist portfolio update to backend:', error);
+      throw error;
+    } finally {
+      setIsPersistenceLoading(false);
+    }
   }, [persistPortfolioData]);
 
   const submitQuoteRequest = (customSelection?: ClientSelection): QuoteRequest => {
@@ -559,13 +555,17 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     });
   };
 
-  // Data Modification Handlers - Direct Firestore Persistence with Atomic Updates
-  const updateProfile = (profile: ProfileInfo, buttonColor?: string) => {
-    updatePortfolioState(prev => ({
-      ...prev,
-      profile,
-      ...(buttonColor ? { buttonColor } : {})
-    }));
+  // Data Modification Handlers - Direct Firestore Persistence with Loading & Try-Catch
+  const updateProfile = async (profile: ProfileInfo, buttonColor?: string): Promise<void> => {
+    try {
+      await updatePortfolioState(prev => ({
+        ...prev,
+        profile,
+        ...(buttonColor ? { buttonColor } : {})
+      }));
+    } catch (e) {
+      console.error('Error updating profile:', e);
+    }
   };
 
   const addProject = (projectData: Omit<ProjectItem, 'id'>) => {
@@ -587,15 +587,19 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }));
   };
 
-  const deleteProject = (id: string) => {
-    updatePortfolioState(prev => ({
-      ...prev,
-      projects: prev.projects.filter(p => p.id !== id)
-    }));
-    setClientSelection(prev => ({
-      ...prev,
-      selectedProjects: prev.selectedProjects.filter(pId => pId !== id)
-    }));
+  const deleteProject = async (id: string): Promise<void> => {
+    try {
+      await updatePortfolioState(prev => ({
+        ...prev,
+        projects: prev.projects.filter(p => p.id !== id)
+      }));
+      setClientSelection(prev => ({
+        ...prev,
+        selectedProjects: prev.selectedProjects.filter(pId => pId !== id)
+      }));
+    } catch (e) {
+      console.error('Error deleting project:', e);
+    }
   };
 
   const addCategory = (categoryData: Omit<CategoryInfo, 'id'> & { id?: string }): CategoryInfo => {
@@ -674,10 +678,38 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  const resetToDefaults = () => {
+  const resetToDefaults = async (): Promise<void> => {
     if (window.confirm('¿Deseas restablecer todos los proyectos y datos al estado inicial del portafolio de Víctor Hugo González?')) {
-      updatePortfolioState(() => INITIAL_PORTFOLIO_DATA);
-      setClientSelection(DEFAULT_CLIENT_SELECTION);
+      try {
+        await updatePortfolioState(() => INITIAL_PORTFOLIO_DATA);
+        setClientSelection(DEFAULT_CLIENT_SELECTION);
+      } catch (e) {
+        console.error('Error resetting to defaults:', e);
+      }
+    }
+  };
+
+  const resetToBlankPortfolio = async (): Promise<void> => {
+    if (window.confirm('¿Estás seguro de reiniciar el portafolio en blanco (sin trabajos, categorías vacías y perfil limpio) para empezar desde cero?')) {
+      try {
+        await updatePortfolioState(prev => ({
+          ...prev,
+          projects: [],
+          categories: [],
+          profile: {
+            ...prev.profile,
+            name: 'Tu Nombre / Estudio',
+            title: 'Diseñador / Creador Profesional',
+            bio: 'Escribe aquí tu biografía y descripción profesional para comenzar a mostrar tus servicios y trayectoria.',
+            avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
+            customLogoUrl: ''
+          }
+        }));
+        clearAllQuoteRequests();
+        setClientSelection(DEFAULT_CLIENT_SELECTION);
+      } catch (e) {
+        console.error('Error resetting to blank portfolio:', e);
+      }
     }
   };
 
@@ -870,6 +902,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         updateCategory,
         deleteCategory,
         resetToDefaults,
+        resetToBlankPortfolio,
         setThemeColor,
         setButtonColor,
         getButtonClass,
