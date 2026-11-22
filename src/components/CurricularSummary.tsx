@@ -54,12 +54,7 @@ export const CurricularSummary: React.FC = () => {
       value: data.profile.areasValue || '8 Áreas',
       label: data.profile.areasLabel || 'Especialidades Gráficas',
       colorClass: isDark ? 'text-blue-400' : 'text-blue-600'
-    },
-    ...(data.profile.showInteractiveBadge !== false ? [{
-      value: data.profile.interactiveValue || '100% Editable',
-      label: data.profile.interactiveLabel || 'Diseño Personalizable',
-      colorClass: isDark ? 'text-emerald-400' : 'text-emerald-600'
-    }] : [])
+    }
   ];
 
   return (

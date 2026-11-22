@@ -1340,26 +1340,6 @@ export const EditProfileModal: React.FC = () => {
                 </div>
               </div>
             </div>
-
-            <div className="pt-2 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  checked={formData.showInteractiveBadge !== false}
-                  onChange={(e) => setFormData({ ...formData, showInteractiveBadge: e.target.checked })}
-                  className="rounded border-slate-400 text-pink-600 focus:ring-pink-500 w-4 h-4"
-                />
-                <span className={`text-xs font-semibold ${isDark ? 'text-neutral-300' : 'text-slate-700'}`}>
-                  Mostrar recuadro / insignia de "100% Editable" (o personalizable)
-                </span>
-              </label>
-              {formData.showInteractiveBadge !== false && (
-                <div className="flex items-center gap-1.5">
-                  <input type="text" value={formData.interactiveValue} onChange={(e) => setFormData({ ...formData, interactiveValue: e.target.value })} placeholder="Valor" className={`w-28 px-2.5 py-1 text-xs border rounded-lg ${isDark ? 'bg-[#090a0f] border-white/10 text-white' : 'bg-white border-slate-300'}`} />
-                  <input type="text" value={formData.interactiveLabel} onChange={(e) => setFormData({ ...formData, interactiveLabel: e.target.value })} placeholder="Etiqueta" className={`w-36 px-2.5 py-1 text-xs border rounded-lg ${isDark ? 'bg-[#090a0f] border-white/10 text-white' : 'bg-white border-slate-300'}`} />
-                </div>
-              )}
-            </div>
           </div>
 
           {/* Section 5: Habilidades */}
