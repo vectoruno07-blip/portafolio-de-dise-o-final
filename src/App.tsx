@@ -52,6 +52,7 @@ const MainContent: React.FC = () => {
     themeMode,
     isFocusMode,
     setIsFocusMode,
+    resetToDefaults,
     t
   } = usePortfolio();
 
@@ -413,16 +414,26 @@ const MainContent: React.FC = () => {
                 {t.gallery.noResultsDesc}
               </p>
             </div>
-            <button
-              onClick={() => {
-                setSearchQuery('');
-                setSelectedCategory('todos');
-                resetAdvancedFilters();
-              }}
-              className="px-4 py-2 bg-gradient-to-r from-pink-600 to-pink-500 text-white rounded-xl text-xs font-bold hover:brightness-110 shadow-md shadow-pink-600/20 cursor-pointer"
-            >
-              {t.advancedFilters.resetFilters}
-            </button>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-2">
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setSelectedCategory('todos');
+                  resetAdvancedFilters();
+                }}
+                className="px-4 py-2 bg-gradient-to-r from-pink-600 to-pink-500 text-white rounded-xl text-xs font-bold hover:brightness-110 shadow-md shadow-pink-600/20 cursor-pointer"
+              >
+                {t.advancedFilters.resetFilters}
+              </button>
+              {data.projects.length === 0 && (
+                <button
+                  onClick={resetToDefaults}
+                  className="px-4 py-2 bg-amber-400 hover:bg-amber-300 text-neutral-950 rounded-xl text-xs font-bold shadow-md shadow-amber-400/20 cursor-pointer"
+                >
+                  Restaurar Portafolio Completo
+                </button>
+              )}
+            </div>
           </div>
         ) : (
           <motion.div 
