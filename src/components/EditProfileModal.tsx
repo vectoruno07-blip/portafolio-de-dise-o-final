@@ -692,49 +692,6 @@ export const EditProfileModal: React.FC = () => {
                     </select>
                   </div>
 
-                  <div className="flex items-center gap-1.5">
-                    <span className={`text-[11px] font-bold ${isDark ? 'text-neutral-400' : 'text-slate-600'}`}>Tipografía:</span>
-                    <select
-                      value={formData.coverLogoFontFamily || 'GatsbyFLF'}
-                      onChange={(e) => setFormData({ ...formData, coverLogoFontFamily: e.target.value })}
-                      className={`px-2.5 py-1 text-xs border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none ${
-                        isDark ? 'bg-[#090a0f] border-white/10 text-white' : 'bg-white border-slate-300 text-slate-900'
-                      }`}
-                    >
-                      <option value="GatsbyFLF">GatsbyFLF</option>
-                      <option value="Cinzel">Cinzel</option>
-                      <option value="Cormorant">Cormorant</option>
-                      <option value="Playfair">Playfair</option>
-                      <option value="Sans">Montserrat</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className={`block text-[11px] font-semibold mb-1 ${isDark ? 'text-neutral-400' : 'text-slate-600'}`}>Cover Línea 1</label>
-                  <input
-                    type="text"
-                    value={formData.coverLogoLine1 || ''}
-                    onChange={(e) => setFormData({ ...formData, coverLogoLine1: e.target.value })}
-                    placeholder="Ej. ESTUDIO DE"
-                    className={`w-full px-3 py-1.5 text-xs border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none ${
-                      isDark ? 'bg-[#090a0f] border-white/10 text-white' : 'bg-white border-slate-300 text-slate-900'
-                    }`}
-                  />
-                </div>
-                <div>
-                  <label className={`block text-[11px] font-semibold mb-1 ${isDark ? 'text-neutral-400' : 'text-slate-600'}`}>Cover Línea 2</label>
-                  <input
-                    type="text"
-                    value={formData.coverLogoLine2 || ''}
-                    onChange={(e) => setFormData({ ...formData, coverLogoLine2: e.target.value })}
-                    placeholder="Ej. DISEÑO"
-                    className={`w-full px-3 py-1.5 text-xs border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none ${
-                      isDark ? 'bg-[#090a0f] border-white/10 text-white' : 'bg-white border-slate-300 text-slate-900'
-                    }`}
-                  />
                 </div>
               </div>
             </div>
