@@ -597,40 +597,23 @@ export const EditProfileModal: React.FC = () => {
               </div>
             </div>
 
-            {/* Cover Text & Typography */}
-            <div className="pt-3 border-t border-white/10 space-y-3">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={formData.coverShowLogoText !== false}
-                    onChange={(e) => setFormData({ ...formData, coverShowLogoText: e.target.checked })}
-                    className="rounded border-slate-400 text-indigo-600 focus:ring-indigo-500 w-4 h-4"
-                  />
-                  <span className={`text-xs font-semibold ${isDark ? 'text-neutral-300' : 'text-slate-700'}`}>
-                    Mostrar texto de dos líneas en el Panel Derecho
-                  </span>
-                </label>
-
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="flex items-center gap-1.5">
-                    <span className={`text-[11px] font-bold ${isDark ? 'text-neutral-400' : 'text-slate-600'}`}>Tamaño:</span>
-                    <select
-                      value={formData.coverLogoSize || 'xl'}
-                      onChange={(e) => setFormData({ ...formData, coverLogoSize: e.target.value as any })}
-                      className={`px-2.5 py-1 text-xs border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none ${
-                        isDark ? 'bg-[#090a0f] border-white/10 text-white' : 'bg-white border-slate-300 text-slate-900'
-                      }`}
-                    >
-                      <option value="sm">Pequeño</option>
-                      <option value="md">Mediano</option>
-                      <option value="lg">Grande</option>
-                      <option value="xl">Extra Grande</option>
-                      <option value="2xl">Máximo</option>
-                    </select>
-                  </div>
-
-                </div>
+            {/* Logo Size Selection */}
+            <div className="pt-3 border-t border-white/10 flex items-center justify-end gap-3">
+              <div className="flex items-center gap-1.5">
+                <span className={`text-[11px] font-bold ${isDark ? 'text-neutral-400' : 'text-slate-600'}`}>Tamaño del Logo:</span>
+                <select
+                  value={formData.coverLogoSize || 'xl'}
+                  onChange={(e) => setFormData({ ...formData, coverLogoSize: e.target.value as any })}
+                  className={`px-2.5 py-1 text-xs border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none ${
+                    isDark ? 'bg-[#090a0f] border-white/10 text-white' : 'bg-white border-slate-300 text-slate-900'
+                  }`}
+                >
+                  <option value="sm">Pequeño</option>
+                  <option value="md">Mediano</option>
+                  <option value="lg">Grande</option>
+                  <option value="xl">Extra Grande</option>
+                  <option value="2xl">Máximo</option>
+                </select>
               </div>
             </div>
           </div>
