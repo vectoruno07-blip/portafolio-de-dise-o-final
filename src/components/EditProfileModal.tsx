@@ -479,68 +479,6 @@ export const EditProfileModal: React.FC = () => {
                 />
               </div>
             </div>
-
-            {/* Logo Typography & Text Toggle */}
-            <div className="mt-4 pt-4 border-t border-white/10 space-y-3">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={formData.showLogoText !== false}
-                    onChange={(e) => setFormData({ ...formData, showLogoText: e.target.checked })}
-                    className="rounded border-slate-400 text-pink-600 focus:ring-pink-500 w-4 h-4"
-                  />
-                  <span className={`text-xs font-semibold ${isDark ? 'text-neutral-300' : 'text-slate-700'}`}>
-                    Mostrar texto / subtítulo de estudio debajo del isotipo
-                  </span>
-                </label>
-
-                <div className="flex items-center gap-2">
-                  <span className={`text-xs font-bold ${isDark ? 'text-neutral-400' : 'text-slate-600'}`}>Tipografía Logo:</span>
-                  <select
-                    value={formData.logoFontFamily || 'GatsbyFLF'}
-                    onChange={(e) => setFormData({ ...formData, logoFontFamily: e.target.value })}
-                    className={`px-3 py-1.5 text-xs border rounded-xl focus:ring-2 focus:ring-pink-500 focus:outline-none ${
-                      isDark ? 'bg-[#090a0f] border-white/10 text-white' : 'bg-white border-slate-300 text-slate-900'
-                    }`}
-                  >
-                    <option value="GatsbyFLF">GatsbyFLF (Elegante Clásica)</option>
-                    <option value="Cinzel">Cinzel Decorative (Alta Gama)</option>
-                    <option value="Cormorant">Cormorant Garamond (Editorial Serif)</option>
-                    <option value="Playfair">Playfair Display (Moderna Sofisticada)</option>
-                    <option value="Sans">Montserrat / Sans (Minimalista)</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Logo text lines edit */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                <div>
-                  <label className={`block text-[11px] font-semibold mb-1 ${isDark ? 'text-neutral-400' : 'text-slate-600'}`}>Texto Línea 1 (Arriba)</label>
-                  <input
-                    type="text"
-                    value={formData.logoLine1 || ''}
-                    onChange={(e) => setFormData({ ...formData, logoLine1: e.target.value })}
-                    placeholder="Ej. ESTUDIO DE"
-                    className={`w-full px-3 py-1.5 text-xs border rounded-xl focus:ring-2 focus:ring-pink-500 focus:outline-none ${
-                      isDark ? 'bg-[#090a0f] border-white/10 text-white' : 'bg-white border-slate-300 text-slate-900'
-                    }`}
-                  />
-                </div>
-                <div>
-                  <label className={`block text-[11px] font-semibold mb-1 ${isDark ? 'text-neutral-400' : 'text-slate-600'}`}>Texto Línea 2 (Abajo)</label>
-                  <input
-                    type="text"
-                    value={formData.logoLine2 || ''}
-                    onChange={(e) => setFormData({ ...formData, logoLine2: e.target.value })}
-                    placeholder="Ej. DISEÑO"
-                    className={`w-full px-3 py-1.5 text-xs border rounded-xl focus:ring-2 focus:ring-pink-500 focus:outline-none ${
-                      isDark ? 'bg-[#090a0f] border-white/10 text-white' : 'bg-white border-slate-300 text-slate-900'
-                    }`}
-                  />
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* Section 2: Personalización de Colores de Botones */}

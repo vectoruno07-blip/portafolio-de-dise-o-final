@@ -24,7 +24,7 @@ export const PersonalLogo: React.FC<PersonalLogoProps> = ({
     ? (data.profile?.coverShowLogoText ?? data.profile?.showLogoText ?? true)
     : (data.profile?.showLogoText ?? true);
 
-  const shouldShowText = showText && showTextSetting;
+  const shouldShowText = false;
 
   const fontChoice = isCover
     ? (data.profile?.coverLogoFontFamily || data.profile?.logoFontFamily || 'GatsbyFLF')
